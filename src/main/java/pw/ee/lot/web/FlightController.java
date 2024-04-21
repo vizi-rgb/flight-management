@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import pw.ee.lot.dto.CreateFlightRequest;
 import pw.ee.lot.dto.FlightResource;
+import pw.ee.lot.dto.UpdateFlightRequest;
 import pw.ee.lot.service.FlightUseCases;
 
 @RestController
@@ -26,6 +27,18 @@ public class FlightController {
             .buildAndExpand(createdFlight.getFlightNumber()).toUri();
 
         return ResponseEntity.created(location).build();
+    }
+
+    @PatchMapping("/{flightNumber}")
+    public ResponseEntity<Void> updateFlight(@PathVariable String flightNumber, @RequestBody @Valid UpdateFlightRequest request) {
+        flightUseCases.updateFlight(flightNumber, request);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/{flightNumber}")
+    public ResponseEntity<Void> deleteFlight(@PathVariable String flightNumber) {
+        flightUseCases.deleteFlight(flightNumber);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/{flightNumber}")
