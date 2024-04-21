@@ -1,0 +1,11 @@
+spring:
+  application:
+    name: lot
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: create
+
+server:
+  servlet:
+    context-path: /api
