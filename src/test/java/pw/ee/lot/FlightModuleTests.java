@@ -12,12 +12,16 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import pw.ee.lot.domain.Flight;
+import pw.ee.lot.domain.Passenger;
+import pw.ee.lot.domain.PhoneNumber;
 import pw.ee.lot.domain.repository.FlightRepository;
+import pw.ee.lot.domain.repository.PassengerRepository;
 import pw.ee.lot.dto.flight.CreateFlightRequest;
 import pw.ee.lot.service.FlightUseCases;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -36,10 +40,13 @@ public class FlightModuleTests {
     private MockMvc mockMvc;
     @Autowired
     private FlightRepository flightRepository;
+    @Autowired
+    private PassengerRepository passengerRepository;
 
     @BeforeEach
     public void setUp() {
         flightRepository.deleteAll();
+        passengerRepository.deleteAll();
     }
 
     @Test
@@ -66,6 +73,7 @@ public class FlightModuleTests {
         // when and then
         mockMvc.perform(get(flightsEndpoint + "/" + flight.getFlightNumber()))
             .andExpect(status().isOk());
+        assertThat(flightRepository.findByFlightNumber(flight.getFlightNumber())).isNotEmpty();
     }
 
     @Test
@@ -88,6 +96,7 @@ public class FlightModuleTests {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(ow.writeValueAsString(createFlightRequest)))
             .andExpect(status().isCreated());
+        assertThat(flightRepository.findByFlightNumber(flightNumber)).isNotEmpty();
     }
 
     @Test
@@ -129,6 +138,7 @@ public class FlightModuleTests {
         // when and then
         mockMvc.perform(delete(flightsEndpoint + "/" + flight.getFlightNumber()))
             .andExpect(status().isNoContent());
+        assertThat(flightRepository.findByFlightNumber(flight.getFlightNumber())).isEmpty();
     }
 
     @Test
@@ -197,6 +207,129 @@ public class FlightModuleTests {
         mockMvc.perform(patch(flightsEndpoint + "/" + wrongFlightNumber)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(ow.writeValueAsString(createFlightRequest)))
+            .andExpect(status().isNotFound());
+    }
+
+    @Test
+    public void givenFlightAndPassenger_whenAddPassengerToFlight_thenReturnHttpNoContent() throws Exception {
+        // given
+        final UUID passengerId = UUID.randomUUID();
+        final int availableSeats = 100;
+        Flight flight = Flight.builder()
+            .flightNumber("LOT123")
+            .departureTime(LocalDateTime.now())
+            .availableSeats(availableSeats)
+            .route(List.of("WAW", "JFK"))
+            .build();
+        flight = flightRepository.save(flight);
+        Passenger passenger = Passenger.builder()
+            .passengerId(passengerId)
+            .firstName("John")
+            .lastName("Smith")
+            .phoneNumber(
+                PhoneNumber.builder()
+                    .countryCode("48")
+                    .phoneNumber("123456789")
+                    .build()
+            )
+            .build();
+        passengerRepository.save(passenger);
+
+        // when and then
+        mockMvc.perform(post(flightsEndpoint + "/" + flight.getFlightNumber() + "/" + passengerId))
+            .andExpect(status().isNoContent());
+        assertThat(flightRepository.findByFlightNumber(flight.getFlightNumber()).get().getAvailableSeats())
+            .isEqualTo(availableSeats - 1);
+
+        final Flight temp = flightRepository.findByFlightNumber(flight.getFlightNumber()).get();
+    }
+
+    @Test
+    public void givenFlightAndPassenger_whenRemovePassengerFromFlight_thenReturnHttpNoContent() throws Exception {
+        // given
+        final UUID passengerId = UUID.randomUUID();
+        final int availableSeats = 100;
+        Flight flight = Flight.builder()
+            .flightNumber("LOT123")
+            .departureTime(LocalDateTime.now())
+            .availableSeats(availableSeats)
+            .route(List.of("WAW", "JFK"))
+            .build();
+        flight = flightRepository.save(flight);
+        Passenger passenger = Passenger.builder()
+            .passengerId(passengerId)
+            .firstName("John")
+            .lastName("Smith")
+            .phoneNumber(
+                PhoneNumber.builder()
+                    .countryCode("48")
+                    .phoneNumber("123456789")
+                    .build()
+            )
+            .build();
+        passengerRepository.save(passenger);
+        flightUseCases.addPassengerToFlight(flight.getFlightNumber(), passengerId);
+
+        // when and then
+        mockMvc.perform(delete(flightsEndpoint + "/" + flight.getFlightNumber() + "/" + passengerId))
+            .andExpect(status().isNoContent());
+        assertThat(flightRepository.findByFlightNumber(flight.getFlightNumber()).get().getAvailableSeats())
+            .isEqualTo(availableSeats);
+    }
+
+    @Test
+    public void givenWrongFlightNumber_whenAddPassengerToFlight_thenReturnHttpNotFound() throws Exception {
+        // given
+        final UUID passengerId = UUID.randomUUID();
+
+        // when and then
+        mockMvc.perform(post(flightsEndpoint + "/WRONG_ID" + "/" + passengerId))
+            .andExpect(status().isNotFound());
+    }
+
+    @Test
+    public void givenWrongPassengerId_whenAddPassengerToFlight_thenReturnHttpNotFound() throws Exception {
+        // given
+        final UUID passengerId = UUID.randomUUID();
+        final int availableSeats = 100;
+        Flight flight = Flight.builder()
+            .flightNumber("LOT123")
+            .departureTime(LocalDateTime.now())
+            .availableSeats(availableSeats)
+            .route(List.of("WAW", "JFK"))
+            .build();
+        flight = flightRepository.save(flight);
+
+        // when and then
+        mockMvc.perform(post(flightsEndpoint + "/" + flight.getFlightNumber() + "/" + passengerId))
+            .andExpect(status().isNotFound());
+    }
+
+    @Test
+    public void givenWrongFlightNumber_whenRemovePassengerFromFlight_thenReturnHttpNotFound() throws Exception {
+        // given
+        final UUID passengerId = UUID.randomUUID();
+
+        // when and then
+        mockMvc.perform(delete(flightsEndpoint + "/WRONG_ID" + "/" + passengerId))
+            .andExpect(status().isNotFound());
+    }
+
+    @Test
+    public void givenWrongPassengerId_whenRemovePassengerFromFlight_thenReturnHttpNotFound() throws Exception {
+        // given
+        final UUID passengerId = UUID.randomUUID();
+        final int availableSeats = 100;
+        Flight flight = Flight.builder()
+            .flightNumber("LOT123")
+            .departureTime(LocalDateTime.now())
+            .availableSeats(availableSeats)
+            .route(List.of("WAW", "JFK"))
+            .build();
+        flight = flightRepository.save(flight);
+
+        // when and then
+        mockMvc.perform(delete(flightsEndpoint + "/" + flight.getFlightNumber() + "/" + passengerId))
             .andExpect(status().isNotFound());
     }
 }

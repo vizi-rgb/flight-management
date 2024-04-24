@@ -23,6 +23,12 @@ class PassengerUseCasesImpl implements PassengerUseCases {
     final PassengerRepository passengerRepository;
     final PassengerMapper passengerMapper;
 
+    /**
+     * Creates a new passenger.
+     *
+     * @param request the request to create a passenger
+     * @return the created passenger
+     */
     @Override
     @Transactional
     public Passenger createPassenger(CreatePassengerRequest request) {
@@ -30,10 +36,14 @@ class PassengerUseCasesImpl implements PassengerUseCases {
         return passengerRepository.save(passenger);
     }
 
+    /**
+     * Deletes a passenger.
+     *
+     * @param passengerId the passenger id to be deleted
+     */
     @Override
     @Transactional
     public void deletePassenger(UUID passengerId) {
-        // TODO: Delete from flights
         final var passenger = passengerRepository.findByPassengerId(passengerId)
             .orElseThrow(() -> {
                 log.error("Cannot delete passenger {} as it's not found", passengerId);
@@ -48,6 +58,12 @@ class PassengerUseCasesImpl implements PassengerUseCases {
         passengerRepository.delete(passenger);
     }
 
+    /**
+     * Updates a passenger.
+     *
+     * @param passengerId the passenger id to be updated
+     * @param request     the request to update a passenger
+     */
     @Override
     @Transactional
     public void updatePassenger(UUID passengerId, UpdatePassengerRequest request) {
@@ -62,6 +78,12 @@ class PassengerUseCasesImpl implements PassengerUseCases {
         passengerRepository.save(passenger);
     }
 
+    /**
+     * Gets a passenger.
+     *
+     * @param passengerId the passenger id to be retrieved
+     * @return the passenger
+     */
     @Override
     @Transactional(readOnly = true)
     public PassengerDetailsResource getPassenger(UUID passengerId) {
