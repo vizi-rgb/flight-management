@@ -2,14 +2,15 @@ package pw.ee.lot.service.internal;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import pw.ee.lot.domain.Flight;
 import pw.ee.lot.domain.repository.FlightRepository;
 import pw.ee.lot.domain.repository.PassengerRepository;
-import pw.ee.lot.dto.flight.CreateFlightRequest;
-import pw.ee.lot.dto.flight.FlightResource;
-import pw.ee.lot.dto.flight.UpdateFlightRequest;
+import pw.ee.lot.dto.flight.*;
 import pw.ee.lot.dto.mapper.FlightMapper;
 import pw.ee.lot.service.FlightUseCases;
 
@@ -90,7 +91,7 @@ class FlightUseCasesImpl implements FlightUseCases {
     }
 
     /**
-     * Retrieve a flight resource by its flight number.
+     * Retrieve a flight details resource by its flight number.
      *
      * @param flightNumber the flight number to retrieve
      * @return the flight resource
@@ -98,14 +99,63 @@ class FlightUseCasesImpl implements FlightUseCases {
      */
     @Override
     @Transactional(readOnly = true)
-    public FlightResource getFlight(String flightNumber) {
+    public FlightDetailsResource getFlight(String flightNumber) {
         final var flight = flightRepository.findByFlightNumber(flightNumber)
             .orElseThrow(() -> {
                 log.error("Cannot get flight with number {} as it's not found", flightNumber);
                 return new NoSuchElementException("Flight not found");
             });
 
-        return flightMapper.mapFlightToFlightResource(flight);
+        return flightMapper.mapFlightToFlightDetailsResource(flight);
+    }
+
+    /**
+     * Retrieve a page of flight resources.
+     *
+     * @param pageable the page request
+     * @return a page of flight resources
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public Page<FlightResource> getFlights(Pageable pageable) {
+        return flightRepository.findAll(pageable)
+            .map(flightMapper::mapFlightToFlightResource);
+    }
+
+    /**
+     * Search for flights based on the given search criteria.
+     *
+     * @param pageable the page request
+     * @param criteria the search criteria
+     * @return a page of flight resources
+     */
+    @Override
+    @Transactional(readOnly = true)
+    public Page<FlightResource> searchFlights(Pageable pageable, FlightSearchCriteria criteria) {
+        Specification<Flight> spec = Specification.where(null);
+
+        if (criteria.flightNumber() != null) {
+            spec = spec.and(((root, query, criteriaBuilder) -> criteriaBuilder.like(root.get("flightNumber"), criteria.flightNumber() + "%")));
+        }
+
+        if (criteria.departureTimeFrom() != null) {
+            spec = spec.and(((root, query, criteriaBuilder) -> criteriaBuilder.greaterThanOrEqualTo(root.get("departureTime"), criteria.departureTimeFrom())));
+        }
+
+        if (criteria.departureTimeTo() != null) {
+            spec = spec.and(((root, query, criteriaBuilder) -> criteriaBuilder.lessThanOrEqualTo(root.get("departureTime"), criteria.departureTimeTo())));
+        }
+
+        if (criteria.availableSeatsFrom() != null) {
+            spec = spec.and(((root, query, criteriaBuilder) -> criteriaBuilder.greaterThanOrEqualTo(root.get("availableSeats"), criteria.availableSeatsFrom())));
+        }
+
+        if (criteria.city() != null) {
+            spec = spec.and(((root, query, criteriaBuilder) -> criteriaBuilder.isMember(criteria.city(), root.get("route"))));
+        }
+
+        return flightRepository.findAll(spec, pageable)
+            .map(flightMapper::mapFlightToFlightResource);
     }
 
     /**

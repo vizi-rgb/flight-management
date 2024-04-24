@@ -2,12 +2,12 @@ package pw.ee.lot.web;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
-import pw.ee.lot.dto.flight.CreateFlightRequest;
-import pw.ee.lot.dto.flight.FlightResource;
-import pw.ee.lot.dto.flight.UpdateFlightRequest;
+import pw.ee.lot.dto.flight.*;
 import pw.ee.lot.service.FlightUseCases;
 
 import java.util.UUID;
@@ -44,10 +44,23 @@ public class FlightController {
     }
 
     @GetMapping("/{flightNumber}")
-    public ResponseEntity<FlightResource> getFlight(@PathVariable String flightNumber) {
+    public ResponseEntity<FlightDetailsResource> getFlight(@PathVariable String flightNumber) {
         final var flight = flightUseCases.getFlight(flightNumber);
         return ResponseEntity.ok(flight);
     }
+
+    @GetMapping
+    public ResponseEntity<Page<FlightResource>> getFlights(Pageable pageable) {
+        final var flights = flightUseCases.getFlights(pageable);
+        return ResponseEntity.ok(flights);
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<Page<FlightResource>> getFlights(Pageable pageable, FlightSearchCriteria criteria) {
+        final var flights = flightUseCases.searchFlights(pageable, criteria);
+        return ResponseEntity.ok(flights);
+    }
+
 
     @PostMapping("/{flightNumber}/{passengerId}")
     public ResponseEntity<Void> addPassengerToFlight(@PathVariable String flightNumber, @PathVariable UUID passengerId) {

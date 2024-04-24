@@ -33,6 +33,6 @@ public class Flight {
     @ElementCollection
     private List<String> route;
 
-    @OneToMany
+    @ManyToMany
     private Set<Passenger> passengers;
 }

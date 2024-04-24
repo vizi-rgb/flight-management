@@ -2,9 +2,8 @@ spring:
   application:
     name: lot
   jpa:
-    show-sql: true
     hibernate:
-      ddl-auto: create
+      ddl-auto: update
 
 server:
   servlet:

@@ -8,7 +8,7 @@ import pw.ee.lot.domain.Passenger;
 import pw.ee.lot.domain.repository.PassengerRepository;
 import pw.ee.lot.dto.mapper.PassengerMapper;
 import pw.ee.lot.dto.passenger.CreatePassengerRequest;
-import pw.ee.lot.dto.passenger.PassengerResource;
+import pw.ee.lot.dto.passenger.PassengerDetailsResource;
 import pw.ee.lot.dto.passenger.UpdatePassengerRequest;
 import pw.ee.lot.service.PassengerUseCases;
 
@@ -40,6 +40,11 @@ class PassengerUseCasesImpl implements PassengerUseCases {
                 return new NoSuchElementException("Passenger not found");
             });
 
+        if (!passenger.getFlights().isEmpty()) {
+            log.error("Cannot delete passenger {} as it's assigned to flights", passengerId);
+            throw new IllegalArgumentException("Passenger is assigned to flights");
+        }
+
         passengerRepository.delete(passenger);
     }
 
@@ -59,14 +64,14 @@ class PassengerUseCasesImpl implements PassengerUseCases {
 
     @Override
     @Transactional(readOnly = true)
-    public PassengerResource getPassenger(UUID passengerId) {
+    public PassengerDetailsResource getPassenger(UUID passengerId) {
         final var passenger = passengerRepository.findByPassengerId(passengerId)
             .orElseThrow(() -> {
                 log.error("Cannot get passenger {} as it's not found", passengerId);
                 return new NoSuchElementException("Passenger not found");
             });
 
-        return passengerMapper.mapPassengerToPassengerResource(passenger);
+        return passengerMapper.mapPassengerToPassengerDetailsResource(passenger);
     }
 
     private void applyPartialUpdates(Passenger passenger, UpdatePassengerRequest request) {

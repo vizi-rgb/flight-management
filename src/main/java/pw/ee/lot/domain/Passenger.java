@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
+import java.util.Set;
 import java.util.UUID;
 
 @Entity
@@ -29,4 +30,7 @@ public class Passenger {
 
     @Embedded
     private PhoneNumber phoneNumber;
+
+    @ManyToMany(mappedBy = "passengers")
+    private Set<Flight> flights;
 }
