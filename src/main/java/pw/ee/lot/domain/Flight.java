@@ -6,6 +6,7 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Builder
@@ -31,4 +32,7 @@ public class Flight {
 
     @ElementCollection
     private List<String> route;
+
+    @OneToMany
+    private Set<Passenger> passengers;
 }

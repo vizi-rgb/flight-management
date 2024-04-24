@@ -2,8 +2,8 @@ package pw.ee.lot.dto.mapper;
 
 import org.springframework.stereotype.Component;
 import pw.ee.lot.domain.Flight;
-import pw.ee.lot.dto.CreateFlightRequest;
-import pw.ee.lot.dto.FlightResource;
+import pw.ee.lot.dto.flight.CreateFlightRequest;
+import pw.ee.lot.dto.flight.FlightResource;
 
 @Component
 public class FlightMapper {

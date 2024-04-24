@@ -1,6 +1,7 @@
 package pw.ee.lot.shared;
 
 import jakarta.validation.ValidationException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
+@Slf4j
 @RestControllerAdvice
 class RestResponseEntityExceptionHandler {
 
@@ -58,8 +60,8 @@ class RestResponseEntityExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, List<String>>> handleException(Exception exception) {
-        exception.printStackTrace();
-        return createResponse(exception.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        log.error("Internal server error", exception);
+        return createResponse("Intenal server error", HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     private ResponseEntity<Map<String, List<String>>> createResponse(List<String> errors, HttpStatus status) {

@@ -5,10 +5,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
-import pw.ee.lot.dto.CreateFlightRequest;
-import pw.ee.lot.dto.FlightResource;
-import pw.ee.lot.dto.UpdateFlightRequest;
+import pw.ee.lot.dto.flight.CreateFlightRequest;
+import pw.ee.lot.dto.flight.FlightResource;
+import pw.ee.lot.dto.flight.UpdateFlightRequest;
 import pw.ee.lot.service.FlightUseCases;
+
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/flights")
@@ -45,6 +47,18 @@ public class FlightController {
     public ResponseEntity<FlightResource> getFlight(@PathVariable String flightNumber) {
         final var flight = flightUseCases.getFlight(flightNumber);
         return ResponseEntity.ok(flight);
+    }
+
+    @PostMapping("/{flightNumber}/{passengerId}")
+    public ResponseEntity<Void> addPassengerToFlight(@PathVariable String flightNumber, @PathVariable UUID passengerId) {
+        flightUseCases.addPassengerToFlight(flightNumber, passengerId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/{flightNumber}/{passengerId}")
+    public ResponseEntity<Void> removePassengerFromFlight(@PathVariable String flightNumber, @PathVariable UUID passengerId) {
+        flightUseCases.removePassengerFromFlight(flightNumber, passengerId);
+        return ResponseEntity.noContent().build();
     }
 
 }

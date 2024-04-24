@@ -1,4 +1,4 @@
-package pw.ee.lot.dto;
+package pw.ee.lot.dto.flight;
 
 import jakarta.validation.constraints.PositiveOrZero;
 
